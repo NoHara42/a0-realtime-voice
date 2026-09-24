@@ -1,0 +1,22 @@
+<html>
+<head><title>Realtime Voice</title></head>
+<body>
+  <div x-data>
+    <template x-if="config">
+      <div class="plugin-config-page">
+        <div class="section-title">Realtime Voice</div>
+        <p>Uses the OpenAI key in Settings → API Keys. Changes apply to the next call. Audio is sent directly to OpenAI and billed by OpenAI.</p>
+        <div class="field"><label class="field-label" for="rtv-model">Realtime model</label><div class="field-control"><input id="rtv-model" type="text" x-model="config.model" placeholder="gpt-realtime-2.1"></div></div>
+        <div class="field"><label class="field-label" for="rtv-voice">Voice</label><div class="field-control"><select id="rtv-voice" x-model="config.voice"><template x-for="voice in ['marin','cedar','alloy','ash','ballad','coral','echo','sage','shimmer','verse']"><option :value="voice" x-text="voice"></option></template></select></div></div>
+        <div class="field"><label class="field-label" for="rtv-vad">Turn detection</label><div class="field-control"><select id="rtv-vad" x-model="config.turn_detection"><option value="semantic_vad">Semantic (finished thought)</option><option value="server_vad">Silence based</option></select></div></div>
+        <div class="field"><label class="field-label" for="rtv-eager">Semantic turn eagerness</label><div class="field-control"><select id="rtv-eager" x-model="config.vad_eagerness"><option>auto</option><option>low</option><option>medium</option><option>high</option></select></div></div>
+        <div class="field"><label class="field-label" for="rtv-transcribe">Caption model (empty disables user captions)</label><div class="field-control"><input id="rtv-transcribe" type="text" x-model="config.transcription_model"></div></div>
+        <div class="field"><label class="field-label" for="rtv-language">Caption language (empty = automatic)</label><div class="field-control"><input id="rtv-language" type="text" x-model="config.transcription_language" placeholder="en"></div></div>
+        <div class="field"><label class="field-label" for="rtv-instructions">Additional voice instructions</label><div class="field-control"><textarea id="rtv-instructions" x-model="config.extra_instructions"></textarea></div></div>
+        <div class="field"><label class="field-label" for="rtv-history">Recent chat messages to include</label><div class="field-control"><input id="rtv-history" type="number" min="0" max="50" x-model.number="config.history_messages"></div></div>
+        <div class="field"><label class="field-label" for="rtv-result">Maximum spoken result context (characters)</label><div class="field-control"><input id="rtv-result" type="number" min="500" max="50000" x-model.number="config.max_result_chars"></div></div>
+      </div>
+    </template>
+  </div>
+</body>
+</html>

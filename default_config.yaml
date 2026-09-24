@@ -1,0 +1,18 @@
+# Realtime speech-to-speech model (OpenAI Realtime API).
+model: gpt-realtime-2.1
+# Output voice: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar
+voice: marin
+# Turn detection: semantic_vad (waits for a finished thought) or server_vad (silence based)
+turn_detection: semantic_vad
+# semantic_vad only: low, medium, high or auto
+vad_eagerness: auto
+# Model used for live captions of your speech. Empty disables captions.
+transcription_model: gpt-transcribe
+# Optional ISO-639-1 language hint for captions, e.g. en or de. Empty means auto.
+transcription_language: ""
+# Extra instructions appended to the voice model's system prompt.
+extra_instructions: ""
+# How many recent chat messages to give the voice model as context at session start.
+history_messages: 6
+# Agent results longer than this are trimmed before being handed to the voice model.
+max_result_chars: 6000

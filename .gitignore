@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+node_modules/
+*.log
+# runtime state written by Agent Zero into the plugin folder
+config.json
+.toggle-0
+.toggle-1
+# local test artefacts
+dev/out/
+dist/
+dev/usr/
+*.wav
+!scripts/fixtures/*.wav

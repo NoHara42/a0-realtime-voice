@@ -1,0 +1,28 @@
+<div x-data>
+  <template x-if="$store.realtimeVoice">
+    <div>
+      <template x-teleport="#chat-buttons-wrapper">
+        <button id="realtime-voice-button" class="chat-button" aria-label="Realtime voice" title="Realtime voice" :aria-pressed="$store.realtimeVoice.active" @click="$store.realtimeVoice.toggle()">
+          <x-icon name="headset" aria-hidden="true"></x-icon>
+        </button>
+      </template>
+      <section class="realtime-voice-panel" x-show="$store.realtimeVoice.active" style="display:none" aria-label="Realtime voice call">
+        <div class="realtime-voice-heading">
+          <strong>Realtime Voice</strong>
+          <span role="status" x-text="$store.realtimeVoice.muted ? 'Microphone muted' : $store.realtimeVoice.phase.replaceAll('_', ' ')"></span>
+        </div>
+        <p x-show="$store.realtimeVoice.tasks.length">Agent Zero is working. You can keep talking.</p>
+        <div class="realtime-voice-captions" tabindex="0" aria-label="Live captions">
+          <template x-for="caption in $store.realtimeVoice.captions.slice(-6)" :key="caption.key">
+            <p><strong x-text="caption.role === 'user' ? 'You: ' : caption.role === 'agent' ? 'Task: ' : 'Voice: '"></strong><span x-text="caption.text"></span></p>
+          </template>
+        </div>
+        <div class="realtime-voice-actions">
+          <button class="btn btn-field" @click="$store.realtimeVoice.mute()" :disabled="!$store.realtimeVoice.connected" x-text="$store.realtimeVoice.muted ? 'Unmute' : 'Mute'"></button>
+          <button class="btn btn-field" @click="$store.realtimeVoice.interrupt()" :disabled="!$store.realtimeVoice.connected">Interrupt</button>
+          <button class="btn btn-field" @click="$store.realtimeVoice.stop()">End call</button>
+        </div>
+      </section>
+    </div>
+  </template>
+</div>

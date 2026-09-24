@@ -1,0 +1,2 @@
+This request was spoken by the user on a live voice call and passed to you by the voice assistant. It may contain speech-to-text mistakes; interpret it sensibly.
+Your final response is read out loud to the user in summary. Start it with a one-sentence direct answer or outcome, keep it concise, and put supporting details after that. If you truly need input from the user, end with one short, clear question.

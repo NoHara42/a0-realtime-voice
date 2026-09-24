@@ -1,0 +1,10 @@
+<div x-data>
+  <template x-if="$store.realtimeVoice">
+    <div class="realtime-voice-panel">
+      <strong>Realtime Voice</strong>
+      <p>Continuous, interruptible conversation with OpenAI. Agent Zero handles delegated tasks in your current chat.</p>
+      <p>Uses your OpenAI key from Settings → API Keys.</p>
+      <button class="btn btn-field" @click="$store.realtimeVoice.openConfig()">Configure Realtime Voice</button>
+    </div>
+  </template>
+</div>
