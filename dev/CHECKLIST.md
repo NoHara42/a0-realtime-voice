@@ -105,4 +105,7 @@ excluded from the release ZIP).
 - [x] Allowlisted release ZIP plus source/archive credential-pattern and artifact audit.
 - [x] Install reviewed changes into running instance, preserving configuration.
 - [x] Review report: `dev/SECURITY_REVIEW.md`.
-- [ ] User publication: choose/create public repo, fill index URL, open upstream PR.
+- [x] Publish source to `NoHara42/a0-realtime-voice` and release `v0.1.1` with ZIP.
+- [x] Clone the index fork into `~/Git/a0-plugins`, prepare and push the entry.
+- [x] Download current index and pass upstream submission validation.
+- [ ] Owner approval of the proposed PR title/body/diff, then open upstream PR.
