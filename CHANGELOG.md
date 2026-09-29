@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2 — 2026-09-29
+
+- Escape error text before sending it to Agent Zero's HTML notifications.
+- Dispatch only completed tool calls from completed Realtime responses; suppress
+  queued dispatch after ending a call.
+- Keep delegation HTTP errors and submission exceptions out of voice results.
+- Abort voice startup if the user switches chats while chat creation is pending.
+- Add regression tests for cancellation, error handling, and startup races.
+
 ## 0.1.1 — 2026-09-24
 
 - Increase inactive headset-button contrast using Agent Zero theme colors and add

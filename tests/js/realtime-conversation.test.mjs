@@ -32,7 +32,7 @@ const callDone = (callId, task, extra = []) => ({
   type: "response.done",
   response: {
     status: "completed",
-    output: [...extra, { type: "function_call", name: "delegate_to_agent", call_id: callId, arguments: JSON.stringify({ task }) }],
+    output: [...extra, { type: "function_call", status: "completed", name: "delegate_to_agent", call_id: callId, arguments: JSON.stringify({ task }) }],
   },
 });
 
@@ -125,7 +125,7 @@ test("delegate failure is reported to the model as an error result", async () =>
   conv.handleServerEvent({ type: "response.done", response: { status: "completed", output: [] } });
   const item = sent.find((e) => e.type === "conversation.item.create");
   assert.ok(item);
-  assert.match(item.item.output, /Could not reach Agent Zero: offline/);
+  assert.match(item.item.output, /Could not reach Agent Zero/);
   assert.equal(conv.tasks.get("c1").status, "error");
 });
 
@@ -136,8 +136,8 @@ test("unknown tool and bad arguments get immediate error outputs", async () => {
     response: {
       status: "completed",
       output: [
-        { type: "function_call", name: "other_tool", call_id: "u1", arguments: "{}" },
-        { type: "function_call", name: "delegate_to_agent", call_id: "u2", arguments: "not json" },
+        { type: "function_call", status: "completed", name: "other_tool", call_id: "u1", arguments: "{}" },
+        { type: "function_call", status: "completed", name: "delegate_to_agent", call_id: "u2", arguments: "not json" },
       ],
     },
   });
@@ -211,4 +211,43 @@ test("closed conversation ignores late results", async () => {
   finish({ status: "completed", output: "late" });
   await tick();
   assert.equal(sent.length, 0);
+});
+
+for (const status of ["cancelled", "failed", "incomplete"]) {
+  test(`${status} responses cannot dispatch agent work`, async () => {
+    const { conv, sent, delegations } = setup();
+    const event = callDone("c1", "run a command");
+    event.response.status = status;
+    conv.handleServerEvent(event);
+    await tick();
+    assert.equal(delegations.length, 0);
+    assert.equal(sent.length, 0);
+  });
+}
+
+test("unfinished function items cannot dispatch agent work", async () => {
+  const { conv, delegations } = setup();
+  const event = callDone("c1", "run a command");
+  event.response.output[0].status = "incomplete";
+  conv.handleServerEvent(event);
+  await tick();
+  assert.equal(delegations.length, 0);
+});
+
+test("closing before queued dispatch prevents new agent work", async () => {
+  const { conv, delegations } = setup();
+  conv.handleServerEvent(callDone("c1", "run a command"));
+  conv.close();
+  await tick();
+  assert.equal(delegations.length, 0);
+});
+
+test("delegate HTTP errors are not forwarded into the voice session", async () => {
+  const { conv, sent } = setup({ delegate: () => Promise.reject(new Error("private backend traceback")) });
+  conv.handleServerEvent(callDone("c1", "job"));
+  await tick();
+  conv.handleServerEvent({ type: "response.done", response: { status: "completed", output: [] } });
+  const item = sent.find((e) => e.type === "conversation.item.create");
+  assert.ok(item);
+  assert.doesNotMatch(item.item.output, /private backend traceback/);
 });

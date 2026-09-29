@@ -8,7 +8,13 @@ import { RealtimeConversation } from "./realtime-conversation.js";
 // Native media objects stay outside Alpine's reactive proxies.
 let runtime = null;
 const endpoint = (name) => `/plugins/realtime_voice/${name}`;
-const fail = (error) => toastFrontendError(error?.message || String(error), "Realtime Voice");
+// Agent Zero notifications render HTML, including provider/network error text.
+const fail = (error) => {
+  const message = String(error?.message || error).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[char]);
+  return toastFrontendError(message, "Realtime Voice");
+};
 
 export const store = createStore("realtimeVoice", {
   active: false,
@@ -45,6 +51,8 @@ export const store = createStore("realtimeVoice", {
       // Use the framework's chat creation path, including project/profile setup.
       const chat = await callJsonApi("/chat_create", rt.ctxid ? { new_context: rt.ctxid } : {});
       if (runtime !== rt) return;
+      // The user may have selected another chat while chat_create was pending.
+      if (globalThis.getContext?.() !== rt.ctxid) { this.stop(); return; }
       rt.ctxid = chat.ctxid;
       globalThis.setContext?.(rt.ctxid);
       rt.watch = setInterval(() => {

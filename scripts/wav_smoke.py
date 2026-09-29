@@ -20,7 +20,7 @@ from helpers import runtime
 from usr.plugins.realtime_voice.helpers.config import get_config
 from usr.plugins.realtime_voice.helpers.delegation import delegate
 from usr.plugins.realtime_voice.helpers.session import (
-    ACK_INSTRUCTIONS, WEBSOCKET_URL, build_instructions, build_session_config, get_api_key,
+    ACK_INSTRUCTIONS, DELEGATE_TOOL_NAME, WEBSOCKET_URL, build_instructions, build_session_config, get_api_key,
 )
 
 
@@ -47,8 +47,8 @@ async def run(args):
         try:
             task = json.loads(call['arguments'])['task']
             result = await delegate(context, task)
-        except Exception as error:
-            result = {'status': 'error', 'output': str(error)}
+        except Exception:
+            result = {'status': 'error', 'output': 'Agent delegation failed. Check the Agent Zero chat.'}
         await outputs.put((call['call_id'], result))
     try:
         async with websockets.connect(WEBSOCKET_URL + '?' + urlencode({'model': cfg['model']}),
@@ -89,8 +89,9 @@ async def run(args):
                 if kind == 'response.done':
                     active = False
                     response = event['response']
-                    if response.get('status') == 'failed': raise RuntimeError(str(response.get('status_details')))
-                    calls = [i for i in response.get('output',[]) if i.get('type') == 'function_call']
+                    if response.get('status') != 'completed': raise RuntimeError('Realtime response did not complete')
+                    calls = [i for i in response.get('output',[]) if i.get('type') == 'function_call'
+                             and i.get('status') == 'completed' and i.get('name') == DELEGATE_TOOL_NAME]
                     for call in calls:
                         job = asyncio.create_task(work(call)); pending.add(job); job.add_done_callback(pending.discard)
                     if calls:

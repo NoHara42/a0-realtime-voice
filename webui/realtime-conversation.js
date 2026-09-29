@@ -85,6 +85,7 @@ export class RealtimeConversation {
 
       case "response.done":
         this.responseActive = false;
+        this.awaitingCreated = false;
         this.handleResponseDone(event.response || {});
         this.flush();
         break;
@@ -127,13 +128,16 @@ export class RealtimeConversation {
 
   handleResponseDone(response) {
     const output = Array.isArray(response.output) ? response.output : [];
-    const calls = output.filter((item) => item && item.type === "function_call");
+    const calls = output.filter((item) => item && item.type === "function_call" && item.status === "completed");
     const spoke = output.some((item) => item && item.type === "message");
 
     if (response.status === "failed") {
       const message = response.status_details?.error?.message || "The voice model failed to respond.";
       this.onError(message);
     }
+    // response.done also carries partial output after cancellation or failure.
+    // Never execute work that the model did not finish requesting.
+    if (response.status !== "completed") return;
 
     this.batchingCalls = true;
     for (const call of calls) this.startCall(call);
@@ -187,12 +191,13 @@ export class RealtimeConversation {
     this.caption(`task-${callId}`, "agent", task, { final: true });
 
     Promise.resolve()
-      .then(() => this.delegate({ callId, task }))
-      .catch((error) => ({
+      .then(() => this.closed ? undefined : this.delegate({ callId, task }))
+      .catch(() => ({
         status: "error",
-        output: `Could not reach Agent Zero: ${error?.message || error}`,
+        output: "Could not reach Agent Zero. Check the chat before retrying; the task may still be running.",
       }))
       .then((result) => {
+        if (this.closed) return;
         entry.status = result?.status === "completed" ? "done" : result?.status || "error";
         entry.output = String(result?.output || "");
         entry.finishedAt = Date.now();

@@ -11,7 +11,7 @@ import zipfile
 root = Path(__file__).resolve().parents[1]
 manifest = (root / 'plugin.yaml').read_text()
 assert re.search(r'^name: realtime_voice$', manifest, re.M)
-assert re.search(r'^version: 0\.1\.1$', manifest, re.M)
+assert re.search(r'^version: 0\.1\.2$', manifest, re.M)
 secret_patterns = [
     re.compile(rb'sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{24,}'),
     re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),

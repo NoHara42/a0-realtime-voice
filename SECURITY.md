@@ -22,6 +22,9 @@ tenant isolation or approval rules.
 - Provider exception text is not echoed by the session endpoint or forwarded as
   a delegation failure. Check the normal Agent Zero chat for task error details.
 - Caption content is rendered as text with Alpine `x-text`, never as HTML.
+- Error text is HTML-escaped before entering Agent Zero's notification renderer.
+- Delegation HTTP failures use a fixed summary instead of sending response bodies
+  (which may contain internal tracebacks) to the voice model.
 
 ## Requests and delegation
 

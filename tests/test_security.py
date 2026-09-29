@@ -74,3 +74,19 @@ async def test_delegate_endpoint_sanitizes_extension_error(monkeypatch):
     result = await Delegate(None, threading.RLock()).process({'task':'test','ctxid':context.id}, None)
     assert result['status'] == 'error'
     assert 'private-provider-error-details' not in str(result)
+
+
+@pytest.mark.asyncio
+async def test_delegate_submission_exception_cannot_escape_api(monkeypatch):
+    from usr.plugins.realtime_voice.api import delegate as api
+    context = SimpleNamespace(id='test-context', agent0=object())
+    monkeypatch.setattr(api.AgentContext, 'get', lambda ctxid: context)
+    monkeypatch.setattr(api.config, 'is_enabled', lambda agent: True)
+    monkeypatch.setattr(api.config, 'get_config', lambda agent: {'max_result_chars': 6000})
+    monkeypatch.setattr(api.delegation, 'delegate', AsyncMock(
+        side_effect=RuntimeError('private submission hook details')))
+    result = await Delegate(None, threading.RLock()).process(
+        {'task': 'test', 'ctxid': context.id}, None)
+    assert result['status'] == 'error'
+    assert 'private submission hook details' not in str(result)
+    assert 'Check the Agent Zero chat' in result['output']

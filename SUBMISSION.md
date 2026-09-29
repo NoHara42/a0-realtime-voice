@@ -1,6 +1,6 @@
 # Submit Realtime Voice to the Agent Zero plugin index
 
-Release candidate: **0.1.1**, plugin name **realtime_voice**.
+Current release: **0.1.2**, plugin name **realtime_voice**.
 Source repository: [NoHara42/a0-realtime-voice](https://github.com/NoHara42/a0-realtime-voice).
 Index fork: [NoHara42/a0-plugins](https://github.com/NoHara42/a0-plugins), branch
 `add-realtime-voice`. The index PR must remain unsubmitted until the owner has
@@ -33,7 +33,7 @@ git push -u origin main
 The local repository's `origin` points to that public repository.
 `.gitignore` excludes runtime configuration, credentials, synthetic
 recordings, screenshots from local checks, and built ZIPs. Inspect the staged
-diff yourself before pushing. Optional: create release `v0.1.1` and attach
+diff yourself before pushing. For subsequent releases, create the matching version tag (currently `v0.1.2`) and attach
 `dist/realtime_voice.zip`; the Git installer uses the repository itself.
 
 GitHub private vulnerability reporting is enabled. Verify that

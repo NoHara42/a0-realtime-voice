@@ -1,19 +1,23 @@
-Initial public release of Realtime Voice for Agent Zero.
+Realtime Voice 0.1.2 fixes task-dispatch, error-handling, and chat-startup issues found during the maintainer audit.
 
-- Continuous OpenAI speech-to-speech over direct browser WebRTC.
-- Interruptible replies, captions, mute, and session cleanup.
-- Native Agent Zero task delegation with an immediate spoken acknowledgement and
-  result narration; no third-party voice hosting.
-- API key stays server-side; settings reuse Agent Zero's normal configuration.
-- Theme-consistent settings and high-contrast headset control.
+## Fixes
 
-Validation: 42 Python tests and 11 JavaScript tests; live synthetic-audio WebRTC
-delegation, terminal execution, spoken results and barge-in; install/uninstall,
-dark/light styling, authentication and CSRF checks.
+- Escape error messages before displaying them in Agent Zero's HTML notifications.
+- Only dispatch completed tool calls from completed Realtime responses. Cancelled, failed, or incomplete responses cannot start agent work.
+- Prevent queued delegation from starting after End call.
+- Keep backend error bodies and submission exceptions out of results sent to the voice model.
+- Abort voice startup if the selected chat changes while chat creation is pending.
+- Apply completion checks and safe delegation errors to the WAV smoke-test utility.
 
-Install the attached `realtime_voice.zip` through Agent Zero's ZIP installer, or
-use the Git installer with this repository URL. See README.md for setup and
-SECURITY.md for data handling and the trusted-instance security model.
+## Verification
 
-The community-index PR is pending owner approval; this release is directly
-installable before an index listing is approved.
+- 20 JavaScript tests passed, including cancellation, notification escaping, and startup regressions.
+- 43 Python tests passed in the Agent Zero development container.
+- Installable ZIP passed source matching, metadata, and credential/artifact checks.
+- Live OpenAI/WebRTC and physical microphone testing were not rerun for this patch.
+
+## Update
+
+Install the attached `realtime_voice.zip` through Agent Zero's plugin installer, or update from this repository using the Git installer. End existing calls and reload browser tabs after updating. No configuration or data migration is required.
+
+Ending a call still leaves already-dispatched Agent Zero tasks running; use the normal agent stop control to stop them.

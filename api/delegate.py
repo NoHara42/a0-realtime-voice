@@ -28,9 +28,14 @@ class Delegate(ApiHandler):
             return Response(status=409, response="Realtime Voice plugin is disabled")
 
         cfg = config.get_config(agent)
-        result = await delegation.delegate(
-            context, task, max_result_chars=int(cfg["max_result_chars"])
-        )
+        try:
+            result = await delegation.delegate(
+                context, task, max_result_chars=int(cfg["max_result_chars"])
+            )
+        except Exception:
+            # Logging/communicate hooks can fail before the helper starts
+            # awaiting the task. The framework otherwise returns a traceback.
+            result = {"status": delegation.STATUS_ERROR}
         if result.get("status") == delegation.STATUS_ERROR:
             # Keep this boundary safe even if an agent extension returns a raw
             # exception message instead of the helper's normal safe summary.
