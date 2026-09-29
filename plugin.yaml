@@ -1,7 +1,7 @@
 name: realtime_voice
 title: Realtime Voice
 description: Talk to Agent Zero with continuous, interruptible speech-to-speech over the OpenAI Realtime API. The voice model handles conversation and delegates real work to your Agent Zero agent.
-version: 0.1.2
+version: 0.1.3
 settings_sections:
   - agent
 per_project_config: true

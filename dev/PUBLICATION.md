@@ -4,8 +4,6 @@
 - Initial source commit: `4f88f53`; release tag: `v0.1.1`.
 - Release: https://github.com/NoHara42/a0-realtime-voice/releases/tag/v0.1.1
 - Installable `realtime_voice.zip` uploaded; private vulnerability reporting enabled.
-- Local source: `/home/nohara/Git/a0-realtime-voice`.
-- Local index fork: `/home/nohara/Git/a0-plugins`.
 - Fork branch: `NoHara42/a0-plugins:add-realtime-voice`.
 - Proposed index commit: `54d6a7e1adbf67dfc457ebaf0ed17df11b3575ce`.
 - Validated upstream base: `bd054590b9c757f8b46aae48b783f967bec7dbe9`.

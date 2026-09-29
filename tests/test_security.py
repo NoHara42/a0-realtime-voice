@@ -90,3 +90,31 @@ async def test_delegate_submission_exception_cannot_escape_api(monkeypatch):
     assert result['status'] == 'error'
     assert 'private submission hook details' not in str(result)
     assert 'Check the Agent Zero chat' in result['output']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('stage', ['context', 'enabled', 'config'])
+async def test_delegate_setup_exceptions_are_sanitized(monkeypatch, stage):
+    from usr.plugins.realtime_voice.api import delegate as api
+    context = SimpleNamespace(id='test-context', agent0=object())
+    monkeypatch.setattr(api.AgentContext, 'get', lambda ctxid: context)
+    monkeypatch.setattr(api.config, 'is_enabled', lambda agent: True)
+    monkeypatch.setattr(api.config, 'get_config', lambda agent: {'max_result_chars': 6000})
+
+    def fail(*args):
+        raise RuntimeError('private setup traceback and credentials')
+
+    target, name = {
+        'context': (api.AgentContext, 'get'),
+        'enabled': (api.config, 'is_enabled'),
+        'config': (api.config, 'get_config'),
+    }[stage]
+    monkeypatch.setattr(target, name, fail)
+    result = await Delegate(None, threading.RLock()).process(
+        {'task': 'test', 'ctxid': context.id}, None)
+    assert result == {
+        'status': 'error',
+        'output': 'The agent failed. Check the Agent Zero chat for details.',
+        'context_id': context.id,
+        'call_id': '',
+    }

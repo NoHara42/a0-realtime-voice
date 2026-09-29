@@ -14,21 +14,26 @@ class FakeTask:
     """Stands in for the DeferredTask returned by AgentContext.communicate."""
 
     def __init__(self, result=None, exc=None, gate: asyncio.Event | None = None):
-        self._result = result
-        self._exc = exc
-        self._gate = gate
-        self.finished = False
+        self._future = concurrent.futures.Future()
 
-    async def result(self):
-        if self._gate:
-            await self._gate.wait()
-        self.finished = True
-        if self._exc:
-            raise self._exc
-        return self._result
+        def finish():
+            if isinstance(exc, concurrent.futures.CancelledError):
+                self._future.cancel()
+            elif exc:
+                self._future.set_exception(exc)
+            else:
+                self._future.set_result(result)
+
+        if gate:
+            async def wait():
+                await gate.wait()
+                finish()
+            asyncio.create_task(wait())
+        else:
+            finish()
 
     def is_alive(self):
-        return not self.finished
+        return not self._future.done()
 
 
 @pytest.fixture
@@ -114,7 +119,7 @@ async def test_stopped_agent_is_reported(monkeypatch, context):
 @pytest.mark.asyncio
 async def test_finished_previous_task_does_not_swallow_new_result(monkeypatch, context):
     previous = FakeTask(result="old")
-    delegation._inflight[context.id] = previous
+    delegation._inflight[context.id] = previous._future
     # The previous task can finish between selection and communicate(). A new
     # returned task must be awaited, not misreported as an intervention.
     _patch_communicate(monkeypatch, context, FakeTask(result="new result"))
@@ -167,3 +172,68 @@ async def test_delegate_api_routes_task_to_requested_chat(monkeypatch, context):
 
     missing = await handler.process({"ctxid": context.id}, request=None)  # type: ignore[arg-type]
     assert missing.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_reused_deferred_task_keeps_each_execution_and_cleanup(monkeypatch, context):
+    from helpers.defer import DeferredTask
+
+    # Use the framework wrapper with controlled execution futures. Complete the
+    # first execution but leave its HTTP waiter pending while communicate starts
+    # the next execution on the SAME wrapper.
+    task = DeferredTask.__new__(DeferredTask)
+    task.children = []
+    first_future = concurrent.futures.Future()
+    second_future = concurrent.futures.Future()
+    executions = iter((first_future, second_future))
+
+    def communicate(msg):
+        task._future = next(executions)
+        return task
+
+    monkeypatch.setattr(context, "communicate", communicate)
+    first = asyncio.create_task(delegation.delegate(context, "first"))
+    await asyncio.sleep(0)
+    first_future.set_result("first result")
+    second = asyncio.create_task(delegation.delegate(context, "second"))
+    await asyncio.sleep(0)
+    assert task._future is second_future
+    assert await first == {"status": "completed", "output": "first result"}
+    assert delegation.voice_delegation_running(context.id)
+    assert delegation._inflight[context.id] is second_future
+    second_future.set_result("second result")
+    assert await second == {"status": "completed", "output": "second result"}
+    assert not delegation.voice_delegation_running(context.id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fail_after_disconnect", [False, True])
+async def test_cancelled_http_waiter_does_not_cancel_agent_execution(monkeypatch, context, fail_after_disconnect):
+    import gc
+
+    loop = asyncio.get_running_loop()
+    errors = []
+    old_handler = loop.get_exception_handler()
+    loop.set_exception_handler(lambda loop, error: errors.append(error))
+    task = FakeTask.__new__(FakeTask)
+    task._future = concurrent.futures.Future()
+    _patch_communicate(monkeypatch, context, task)
+    waiter = asyncio.create_task(delegation.delegate(context, "keep working"))
+    await asyncio.sleep(0)
+    waiter.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await waiter
+    assert not task._future.cancelled()
+    try:
+        if fail_after_disconnect:
+            task._future.set_exception(RuntimeError("private detached agent failure"))
+        else:
+            task._future.set_result("finished independently")
+        # Drain wrap_future and its callbacks, then collect detached references.
+        for _ in range(4):
+            await asyncio.sleep(0)
+        gc.collect()
+        assert errors == []
+        assert context.id not in delegation._inflight
+    finally:
+        loop.set_exception_handler(old_handler)

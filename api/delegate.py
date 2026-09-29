@@ -19,26 +19,27 @@ class Delegate(ApiHandler):
         if not task:
             return Response(status=400, response="Missing task")
 
-        context = AgentContext.get(str(input.get("ctxid") or "").strip())
-        if context is None:
-            return Response(status=404, response="Chat no longer exists. Start a new voice call.")
-        agent = context.agent0
-
-        if not config.is_enabled(agent):
-            return Response(status=409, response="Realtime Voice plugin is disabled")
-
-        cfg = config.get_config(agent)
+        context_id = str(input.get("ctxid") or "").strip()
         try:
+            context = AgentContext.get(context_id)
+            if context is None:
+                return Response(status=404, response="Chat no longer exists. Start a new voice call.")
+            agent = context.agent0
+
+            if not config.is_enabled(agent):
+                return Response(status=409, response="Realtime Voice plugin is disabled")
+
+            cfg = config.get_config(agent)
             result = await delegation.delegate(
                 context, task, max_result_chars=int(cfg["max_result_chars"])
             )
         except Exception:
-            # Logging/communicate hooks can fail before the helper starts
-            # awaiting the task. The framework otherwise returns a traceback.
+            # Context/configuration and logging/communicate hooks can fail
+            # before awaiting the task. The framework otherwise returns a traceback.
             result = {"status": delegation.STATUS_ERROR}
         if result.get("status") == delegation.STATUS_ERROR:
             # Keep this boundary safe even if an agent extension returns a raw
             # exception message instead of the helper's normal safe summary.
             result = {"status": delegation.STATUS_ERROR,
                       "output": "The agent failed. Check the Agent Zero chat for details."}
-        return {**result, "context_id": context.id, "call_id": str(input.get("call_id") or "")}
+        return {**result, "context_id": context_id, "call_id": str(input.get("call_id") or "")}

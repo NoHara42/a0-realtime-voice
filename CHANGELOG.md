@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 — 2026-09-29
+
+- Track delegation by execution future so a reused Agent Zero task wrapper cannot
+  lose a new result or clear the new execution's tracking.
+- Keep HTTP request cancellation from cancelling an already dispatched agent task.
+- Sanitize errors from chat lookup and configuration as well as task submission.
+- Add regression coverage for task reuse, cancellation, and setup failures.
+- Remove local home-directory paths from the current publication notes. Historical
+  commit metadata is unchanged; new release commits use a GitHub noreply identity.
+
 ## 0.1.2 — 2026-09-29
 
 - Escape error text before sending it to Agent Zero's HTML notifications.
